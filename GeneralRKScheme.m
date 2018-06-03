@@ -13,7 +13,7 @@ function [tout,xout,varargout] = GeneralRKScheme(ODE,Jacobian,RKTable,x0,tInt,NT
     no_of_ODEs = nEqn - no_of_constraints;
 
     M = eye(nEqn);                 % Mass matrix
-    M(no_of_ODEs+1:nEqn) = 0;
+    M(no_of_ODEs+1:nEqn,no_of_ODEs+1:nEqn) = 0;
 %
 %   Get the RK scheme specs
 %   -----------------------
@@ -47,19 +47,15 @@ function [tout,xout,varargout] = GeneralRKScheme(ODE,Jacobian,RKTable,x0,tInt,NT
         for iter = 1 : NEWTON_MAXSTEPS 
             for s = 1:Nstages
 %
-%               Force the constraints to be zero
-%               --------------------------------
-                for cons = 1:no_of_constraints
-                    k0(oneEq_f(no_of_ODEs+cons)) = 0;
-                end
-                
+%               Construct the ODEs evaluation point
+%               -----------------------------------
                 for eq = 1:nEqn
-                    x(eq) = xout(eq,n) + dt*dot(a(s,:),k0(oneEq_f(eq)));
+                    x(eq) = xout(eq,n) + dt*dot(a(s,:),k0(oneEq_f(eq))); 
                 end
 %
 %               Construct Newton iterations RHS
 %               -------------------------------
-                f0(pos_f(s)) = ODE(ti(n)+c(s)*dt,x)-k0(pos_f(s));
+                f0(pos_f(s)) = ODE(ti(n)+c(s)*dt,x)-diag(M).*k0(pos_f(s));                
 %
 %               Construct the Jacobian row that corresponds to the stage
 %               --------------------------------------------------------

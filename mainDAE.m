@@ -20,8 +20,8 @@ addpath('./RungeKuttaTables');
 %   Initial condition
 %   -----------------
     x0 = [l,0];
-    NT = 100;
-    tEnd = 5.0;
+    NT = 200;
+    tEnd = 10.0;
 %
 %   ****************************
 %   Solve by natural coordinates
@@ -37,15 +37,36 @@ addpath('./RungeKuttaTables');
 %   --------------------
     [toutPD,youtPD,nMaxSteps] = GeneralRKScheme(@(t,x)(PendulumODE_reduced(x,t,pend)),@(t,x)(PendulumODE_reducedJac(x,t,pend)),@()(DormandPrinceTable),[theta0,0],[0,tEnd],NT,0);            
     
-    h = figure;
-    hold on;
-    plot(toutRIIA, youtRIIA(1,:));
-    plot(toutPD, youtPD(1,:));
-    legend({'RIIA','PD'})
+
     
 %
 %   *********************
 %   Solve with constraint
 %   *********************
 %
-    [toutCONS,youtCONS,nMaxSteps] = GeneralRKScheme(@(t,x)(PendulumODE(x,t,pend)),@(t,x)(PendulumODEJac(x,t,pend)),@()(DormandPrinceTable),[l,0,0,0,0v ],[0,tEnd],NT,1);            
+    [toutCONS,youtCONS,nMaxSteps] = GeneralRKScheme(@(t,x)(PendulumODE(x,t,pend)),@(t,x)(PendulumODEJac(x,t,pend)),@()(RadauIIATable),[l,0,0,0,0 ],[0,tEnd],NT,1);            
+
+%
+%   *************************
+%   Comparison of theta angle
+%   *************************
+%    
+    h = figure;
+    hold on;
+    plot(toutRIIA, youtRIIA(1,:));
+    plot(toutPD, youtPD(1,:));
+    plot(toutCONS,atan2(youtCONS(1,:),-youtCONS(3,:)))
+    xlabel('$t$ ($s$)','interpreter','latex');
+    ylabel('$\theta$','interpreter','latex')
+    legend({'RIIA','PD','RADIIA DAE'})    
+ %
+ %  ******************************
+ %  Comparison of pendulum tension
+ %  ******************************
+ %
+    h = figure;
+    hold on;
+    plot(toutRIIA,m*g*cos(youtRIIA(1,:)));
+    plot(toutPD,m*g*cos(youtPD(1,:)))
+    plot(toutCONS,youtCONS(5,:))
+    
